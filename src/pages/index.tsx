@@ -1,115 +1,76 @@
 import Image from "next/image";
 import localFont from "next/font/local";
+import Blog from "@/componants/Blog";
+import Comment from "@/componants/Comment";
+import SearchIcon from "@/componants/Icons/SearchIcon";
+import SearchBar from "@/componants/SearchBar";
+import { useEffect, useState } from "react";
+import { IBlog, Tag } from "@/types/blog.type";
+import Fuse from "fuse.js";
+import useBlogs from "@/hooks/useBlogs";
+import BlogDialog from "@/componants/Dialog/BlogDialog";
+import { tr } from "date-fns/locale";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
-
+// const posts = [
+//   { id: 1, author: 'Wittawat', category: 'History', title: 'The Beginning of the End of the World', description: 'The afterlife sitcom The Good Place comes to its culmination...', comments: 32 },
+//   { id: 2, author: 'Zach', category: 'History', title: 'The Big Short War', description: 'Tall, athletic, handsome with cerulean eyes...', comments: 4 },
+//   { id: 3, author: 'Nicholas', category: 'Exercise', title: 'The Mental Health Benefits of Exercise', description: 'You already know that exercise is good for your body...', comments: 32 },
+//   { id: 4, author: 'Carl', category: 'History', title: 'What Makes a Man Betray His Country?', description: 'The life of Adolf Tolkachev, Soviet dissident and CIA spy...', comments: 0 },
+// ];
 export default function Home() {
-  return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [searchBlog, setSearchBlog] = useState<string>("");
+  const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
+  //useBlogs to fetch list of blog
+  const { blogs, loading, error, hasMore, loadMore, refresh } = useBlogs(
+    selectedTag, //Community Select
+    1, //page
+    10 //limit by page
+  );
+  const [results, setResults] = useState<any>(blogs);
+  // Initialize Fuse.js for fuzzy searching blogs
+  const fuse = new Fuse(blogs, {
+    keys: ["title"], // Fields to search in
+    includeScore: true, // Optional: Include score in results for further analysis
+    threshold: 0.3, // Optional: Adjust threshold for fuzzy search
+  });
+  // Effect to update search results based on search input
+  useEffect(() => {
+    console.log("searchBlog ", searchBlog);
+    if (searchBlog) {
+      const result = fuse.search(searchBlog);
+      setResults(result.map((item) => item.item));
+    } else {
+      setResults(blogs); // Show all posts when search is empty
+    }
+  }, [searchBlog, blogs]); // Run this effect when searchBlog or blogs change
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  return (
+    <div className=" flex   w-full justify-center  overflow-x-auto ">
+      <div className="flex flex-col w-full lg:w-3/6 px-6  items-center">
+        {/* Seacrh bar by text search and community */}
+        <SearchBar
+          refresh={refresh}
+          searchBlog={searchBlog}
+          selectedTag={selectedTag}
+          setSearchBlog={setSearchBlog}
+          setSelectedTag={setSelectedTag}
+        />
+        {/* Blog list of Specific user */}
+        <div className="flex flex-col border border-gray-400 rounded-xl py-2 bg-white w-full  mb-6">
+          {results.map((data: IBlog, index: number) => (
+            <Blog refresh={refresh} data={data} key={index} full={false} />
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        {/* Show more Blog by button */}
+        {hasMore && !loading && (
+          <button
+            className="flex bg-success justify-center text-white font-semibold text-sm  p-2 items-center mb-6 w-[105px] rounded-full"
+            onClick={loadMore}
+          >
+            Load More
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -25,3 +25,17 @@ body {
     text-wrap: balance;
   }
 }
+.arrow-icon {
+  margin-left: 0.5rem; /* equivalent to Tailwind's ml-2 */
+  width: 20px;        /* equivalent to Tailwind's w-5 */
+  height: 20px;       /* equivalent to Tailwind's h-5 */
+  transition: transform 0.3s ease; /* Smooth transition for rotation */
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.rotate-0 {
+  transform: rotate(0deg);
+}
